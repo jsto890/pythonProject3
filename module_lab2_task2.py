@@ -99,29 +99,34 @@ class Network(object):
         # if node not found, return None
         return None
 
-    # **these methods are incomplete, you must complete them as part of the lab task**
     def add_node(self, name, value=None):
-        node = self.get_node(name)
-        if node is None:
-            node = Node(name, value)
-            self.nodes.append(node)
-        return node
+        # Check if the node already exists in the network
+        for node in self.nodes:
+            if node.name == name:
+                return node
+
+        # Create and add the new node if it doesn't already exist
+        new_node = Node(name=name, value=value)
+        self.nodes.append(new_node)
+        return new_node
 
     def add_arc(self, source, destination, weight):
-        arc = Arc(source, destination, weight)
-        source.outbound_arcs.append(arc)
-        destination.inbound_arcs.append(arc)
+        arc = Arc(weight=weight, from_node=source, to_node=destination)
+        source.arcs_out.append(arc)
+        destination.arcs_in.append(arc)
         self.arcs.append(arc)
 
-    def read_network(self, file_path):
-        with open(file_path, "r") as file:
+    def read_network(self, filename):
+        with open(filename, "r") as file:
             for line in file:
-                node_info, arc_info = line.strip().split(",")
-                source = self.add_node(node_info)
-                for arc in arc_info.split(";"):
-                    dest_name, weight = arc.split(":")
-                    destination = self.add_node(dest_name)
-                    self.add_arc(source, destination, float(weight))
+                node_info, *arc_infos = line.strip().split(",")
+                node_name = node_info.strip()
+                source_node = self.add_node(node_name)
+
+                for arc_info in arc_infos:
+                    d_name, weight = arc_info.strip().split(";")
+                    d_node = self.add_node(d_name.strip())
+                    self.add_arc(source_node, d_node, float(weight))
 
 
 class NetworkElectricNZ(Network):
