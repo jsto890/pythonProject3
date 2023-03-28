@@ -20,6 +20,7 @@ class Node(object):
     arcs_out : list
         Arc objects that begin at this node.
     """
+
     def __init__(self, name=None, value=None, arcs_in=None, arcs_out=None):
 
         self.name = name
@@ -46,6 +47,7 @@ class Arc(object):
     from_node : Node
         Node object at which arc begins.
     """
+
     def __init__(self, weight=None, from_node=None, to_node=None):
         self.weight = weight
         self.from_node = from_node
@@ -66,6 +68,7 @@ class Network(object):
     arcs : list
         A list of all Arc (defined above) objects in the network.
     """
+
     def __init__(self, nodes=None, arcs=None):
         if nodes is None:
             self.nodes = []
@@ -100,33 +103,42 @@ class Network(object):
         return None
 
     def add_node(self, name, value=None):
-        # Check if the node already exists in the network
-        for node in self.nodes:
-            if node.name == name:
-                return node
+        if self.get_node(name) is None:
+            new_node = Node(name, value)
+            self.nodes.append(new_node)
 
-        # Create and add the new node if it doesn't already exist
-        new_node = Node(name=name, value=value)
-        self.nodes.append(new_node)
-        return new_node
-
-    def add_arc(self, source, destination, weight):
-        arc = Arc(weight=weight, from_node=source, to_node=destination)
-        source.arcs_out.append(arc)
-        destination.arcs_in.append(arc)
-        self.arcs.append(arc)
+    def add_arc(self, node_from, node_to, weight):
+        new_arc = Arc(weight, node_from, node_to)
+        node_from.arcs_out.append(new_arc)
+        node_to.arcs_in.append(new_arc)
+        self.arcs.append(new_arc)
 
     def read_network(self, filename):
-        with open(filename, "r") as file:
+        with open(filename, 'r') as file:
             for line in file:
-                node_info, *arc_infos = line.strip().split(",")
-                node_name = node_info.strip()
-                source_node = self.add_node(node_name)
+                line_parts = line.strip().split(',', 1)
 
-                for arc_info in arc_infos:
-                    d_name, weight = arc_info.strip().split(";")
-                    d_node = self.add_node(d_name.strip())
-                    self.add_arc(source_node, d_node, float(weight))
+                node_info = line_parts[0]
+                node = self.get_node(node_info)
+
+                if node is None:
+                    self.add_node(node_info)
+
+                node = self.get_node(node_info)
+
+                if len(line_parts) == 2:
+                    arcs_info = line_parts[1]
+
+                    for arc_info in arcs_info.split(','):
+                        to_node_info, weight = arc_info.split(';')
+                        to_node = self.get_node(to_node_info)
+
+                        if to_node is None:
+                            self.add_node(to_node_info)
+
+                        to_node = self.get_node(to_node_info)
+
+                        self.add_arc(node, to_node, int(weight))
 
 
 class NetworkElectricNZ(Network):
@@ -140,6 +152,7 @@ class NetworkElectricNZ(Network):
     plot_network
         Produces a map of the NZ Electricity network once constructed with read_network.
     """
+
     def read_network(self, directory):
         """
         Reads network information from a directory
@@ -165,11 +178,13 @@ class NetworkElectricNZ(Network):
         # Loop through each node folder first
         # (Go through connections folder second, so we do not need to check for duplicates when adding new nodes)
         for subdir in glob(directory + os.sep + '*'):
+            print(f"Checking subdir: {subdir}")
             # Do not go through connections subdirectory
             if subdir != con_subdir:
 
                 # Open the station_data.txt file as read-only
                 with open(subdir + os.sep + 'station_data.txt', 'r') as fp:
+                    print(f"Reading file: {subdir + os.sep + 'station_data.txt'}")
                     # Get first line
                     ln = fp.readline()
                     # Initialise data array: data[0] will be code, data[1] will be x value, data[2] will be y value
@@ -187,6 +202,7 @@ class NetworkElectricNZ(Network):
 
         # Loop through each file in connections subdirectory
         for con_file in glob(con_subdir + os.sep + '*'):
+            print(f"Reading connections file: {con_file}")
             # Find the from-to nodes from the filename
             filename = os.path.splitext(con_file)[0]
             filename = filename.split(os.sep)[-1]
@@ -215,7 +231,7 @@ class NetworkElectricNZ(Network):
         ax = plt.axes()
 
         # NZ coastline as background
-        img = mpimg.imread('bg.png')
+        img = mpimg.imread('/Users/josephstorey/Downloads/lab2_datastructures_task2/bg.png')
         ax.imshow(img, zorder=1)
 
         # a filthy hack to get coordinates in the right spot...
@@ -268,7 +284,6 @@ class NetworkElectricNZ(Network):
 
         # display options
         if save:
-
             # save to file
             plt.savefig(save, dpi=300, facecolor='w', edgecolor='w', orientation='portrait', papertype=None,
                         format=None, transparent=False, bbox_inches=None, pad_inches=0.1, frameon=None, metadata=md)
@@ -276,3 +291,5 @@ class NetworkElectricNZ(Network):
         else:
             # open figure window in screen
             plt.show()
+
+
