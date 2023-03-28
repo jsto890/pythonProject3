@@ -103,17 +103,55 @@ class Network(object):
         return None
 
     def add_node(self, name, value=None):
+        """
+        Add a new node to the network with the given name and optional value.
+
+        Parameters:
+            name (str): The name of the new node.
+            value (Any, optional): The value to store in the new node. Defaults to None.
+
+        Return:
+            None
+        """
         if self.get_node(name) is None:
             new_node = Node(name, value)
             self.nodes.append(new_node)
 
     def add_arc(self, node_from, node_to, weight):
+        """
+        Add a directed arc between two nodes with the given weight.
+
+        Parameters:
+            node_from (Node): The origin node of the arc.
+            node_to (Node): The destination node of the arc.
+            weight (int): The weight of the arc.
+
+        Return:
+            None
+        """
         new_arc = Arc(weight, node_from, node_to)
         node_from.arcs_out.append(new_arc)
         node_to.arcs_in.append(new_arc)
         self.arcs.append(new_arc)
 
     def read_network(self, filename):
+        """
+        Read a network from a file and fill the network with nodes and arcs.
+
+        The input file should contain one line per node, with the following format:
+            node, arc;weight, arc;weight
+
+        Example:
+            A, B;1, C;2
+            B, C;3
+            C
+
+        Args:
+            filename (str): The path to the file containing the network data.
+
+        Return:
+            None
+            """
         with open(filename, 'r') as file:
             for line in file:
                 line_parts = line.strip().split(',', 1)
